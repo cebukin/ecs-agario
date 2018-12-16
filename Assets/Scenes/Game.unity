@@ -159,6 +159,7 @@ MonoBehaviour:
   FoodSize: 2
   PlayerMaxSpeed: 10
   ArenaSize: 10
+  FoodCount: 100
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0

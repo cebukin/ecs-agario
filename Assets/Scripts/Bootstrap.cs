@@ -27,7 +27,7 @@ public sealed class Bootstrap
         );
 
         FoodArchetype = entityManager.CreateArchetype(
-            typeof(Position), typeof(Size)
+            typeof(Position), typeof(Scale), typeof(Size), typeof(Food)
         );
     }
 

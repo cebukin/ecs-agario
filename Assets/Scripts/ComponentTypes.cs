@@ -8,8 +8,10 @@ public struct Heading : IComponentData
 {
     public float3 Value;
 }
-    
+
 public struct Size : IComponentData
 {
     public float Value;
 }
+
+public struct Food : IComponentData {}
