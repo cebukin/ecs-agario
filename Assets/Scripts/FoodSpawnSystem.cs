@@ -15,15 +15,26 @@ public class FoodSpawnSystem : ComponentSystem
         for (int i = 0; i < quantityToSpawn; i++)
         {
             PostUpdateCommands.CreateEntity(Bootstrap.FoodArchetype);
+
+            float possibleSize = settings.ArenaSize * 10 * 0.9f;
+
             PostUpdateCommands.SetComponent(new Position
             {
                 Value = new float3(
-                    Random.Range(- settings.ArenaSize * 10 / 2.0f, settings.ArenaSize * 10 / 2.0f),
-                    Random.Range(- settings.ArenaSize * 10 / 2.0f, settings.ArenaSize * 10 / 2.0f),
+                    Random.Range(- possibleSize / 2.0f, possibleSize / 2.0f),
+                    Random.Range(- possibleSize / 2.0f, possibleSize / 2.0f),
                     0.0f
                 )
             });
             PostUpdateCommands.SetComponent(new Scale { Value = new float3(1.0f, 1.0f, 1.0f) });
+            PostUpdateCommands.SetComponent(new Size { Value = settings.FoodSize });
+            PostUpdateCommands.SetComponent(
+                new Scale {
+                    Value = new float3(settings.FoodSize,
+                        settings.FoodSize,
+                        settings.FoodSize)
+                }
+            );
             PostUpdateCommands.AddSharedComponent(Bootstrap.FoodLook);
         }
     }
