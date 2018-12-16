@@ -8,4 +8,5 @@ public class Settings : MonoBehaviour
     public float PlayerInitialSize;
     public float FoodSize;
     public float PlayerMaxSpeed;
+    public float ArenaSize;
 }
