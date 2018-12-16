@@ -10,39 +10,50 @@ using Unity.Jobs;
 [UpdateAfter(typeof(MoveSystem))]
 public class CollisionSystem : ComponentSystem
 {
-    public struct Data
+    public struct PlayerData
     {
         public readonly int Length;
         public ComponentDataArray<Position> Position;
         public ComponentDataArray<Size> Size;
+        public ComponentDataArray<Player> Player;
     }
 
-    [Inject] Data m_Data;
+    [Inject] PlayerData _mPlayerData;
 
+    public struct FoodData
+    {
+        public readonly int Length;
+        public ComponentDataArray<Position> Position;
+        public ComponentDataArray<Size> Size;
+        public ComponentDataArray<Food> Food;
+        public EntityArray Entities;
+    }
+
+    [Inject] FoodData _mFoodData;
 
     protected override void OnUpdate()
     {
-        for (int i = 0; i < m_Data.Length; i++)
+        for (int i = 0; i < _mPlayerData.Length; i++)
         {
-            for (int j = i + 1; j < m_Data.Length; j++)
+            for (int j = 0; j < _mFoodData.Length; j++)
             {
-                if (IsColliding(m_Data.Position[i], m_Data.Position[j], m_Data.Size[i], m_Data.Size[j]))
+                if (!IsColliding(_mPlayerData.Position[i], _mFoodData.Position[j], _mPlayerData.Size[i],
+                    _mFoodData.Size[j]))
                 {
-                    Debug.LogError("IsColliding");
+                    continue;
                 }
+
+                float size = _mPlayerData.Size[i].Value + _mFoodData.Size[j].Value;
+                _mPlayerData.Size[i] = new Size { Value = size };
+                PostUpdateCommands.DestroyEntity(_mFoodData.Entities[j]);
             }
         }
     }
 
     bool IsColliding(Position pA, Position pB, Size sA, Size sB)
     {
-        float distance = Mathf.Sqrt(
-            (pA.Value.x - pB.Value.x) * (pA.Value.x - pB.Value.x) +
-            (pA.Value.y - pB.Value.y) * (pA.Value.y - pB.Value.y)
-        );
-
-        float maxRadius = Math.Max(sA.Value / 2.0f, sB.Value / 2.0f);
-
+        float distance = math.distance(pA.Value, pB.Value);
+        float maxRadius = math.max(sA.Value / 2.0f, sB.Value / 2.0f);
         return distance < maxRadius;
     }
 }

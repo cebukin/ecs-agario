@@ -15,3 +15,5 @@ public struct Size : IComponentData
 }
 
 public struct Food : IComponentData {}
+
+public struct Player : IComponentData {}

@@ -23,7 +23,12 @@ public sealed class Bootstrap
         var entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
         PlayerArchetype = entityManager.CreateArchetype(
-            typeof(Position), typeof(Scale), typeof(PlayerInput), typeof(Size), typeof(Heading)
+            typeof(Position),
+            typeof(Scale),
+            typeof(PlayerInput),
+            typeof(Size),
+            typeof(Heading),
+            typeof(Player)
         );
 
         FoodArchetype = entityManager.CreateArchetype(
@@ -39,13 +44,6 @@ public sealed class Bootstrap
 
         entityManager.SetComponentData(player, new Position {Value = new float3(0.0f, 0.0f,0.0f)});
         entityManager.SetComponentData(player, new Size { Value = Settings.PlayerInitialSize });
-        entityManager.SetComponentData(player,
-            new Scale {
-                Value = new float3(Settings.PlayerInitialSize,
-                Settings.PlayerInitialSize,
-                Settings.PlayerInitialSize)
-            }
-        );
         entityManager.SetComponentData(player, new Heading { Value = new float3(0.0f, 0.0f, 0.0f)} );
         entityManager.AddSharedComponentData(player, PlayerLook);
     }
