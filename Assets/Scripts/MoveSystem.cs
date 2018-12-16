@@ -28,6 +28,7 @@ public class MoveSystem : JobComponentSystem
         public float initialPlayerSize;
         public float playerMaxSpeed;
         public float dt;
+        public float arenaSize;
 
         public void Execute(int index)
         {
@@ -35,8 +36,11 @@ public class MoveSystem : JobComponentSystem
             
             float3 position = positions[index].Value;
             position += dt * headings[index].Value * speed;
-            
-           positions[index] = new Position {Value = position};
+
+            position.x = Mathf.Clamp(position.x, -arenaSize / 2.0f, arenaSize / 2.0f);
+            position.y = Mathf.Clamp(position.y, -arenaSize / 2.0f, arenaSize / 2.0f);
+
+            positions[index] = new Position {Value = position};
         }
     }
     
@@ -51,7 +55,8 @@ public class MoveSystem : JobComponentSystem
             sizes = m_Data.Size,
             initialPlayerSize = settings.PlayerInitialSize,
             playerMaxSpeed = settings.PlayerMaxSpeed,
-            dt = Time.deltaTime
+            dt = Time.deltaTime,
+            arenaSize = settings.ArenaSize * 10
         };
 
         return calculatePositionsJob.Schedule(m_Data.Length, 64, inputDeps);
