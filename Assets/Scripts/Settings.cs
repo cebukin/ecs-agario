@@ -10,4 +10,5 @@ public class Settings : MonoBehaviour
     public float PlayerMaxSpeed;
     public int ArenaSize;
     public int FoodCount;
+    public int BotCount;
 }

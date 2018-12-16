@@ -11,9 +11,11 @@ public sealed class Bootstrap
 {
     public static EntityArchetype PlayerArchetype;
     public static EntityArchetype FoodArchetype;
+    public static EntityArchetype BotArchetype;
 
     public static MeshInstanceRenderer PlayerLook;
     public static MeshInstanceRenderer FoodLook;
+    public static MeshInstanceRenderer BotLook;
 
     public static Settings Settings;
 
@@ -34,6 +36,15 @@ public sealed class Bootstrap
         FoodArchetype = entityManager.CreateArchetype(
             typeof(Position), typeof(Scale), typeof(Size), typeof(Food)
         );
+
+        BotArchetype = entityManager.CreateArchetype(
+            typeof(Position),
+            typeof(Scale),
+            typeof(BotInput),
+            typeof(Size),
+            typeof(Heading),
+            typeof(Player)
+        );
     }
 
     public static void NewGame()
@@ -45,6 +56,11 @@ public sealed class Bootstrap
         entityManager.SetComponentData(player, new Position {Value = new float3(0.0f, 0.0f,0.0f)});
         entityManager.SetComponentData(player, new Size { Value = Settings.PlayerInitialSize });
         entityManager.SetComponentData(player, new Heading { Value = new float3(0.0f, 0.0f, 0.0f)} );
+        entityManager.SetComponentData(player, new Scale
+        {
+            Value = new float3(Settings.PlayerInitialSize, Settings.PlayerInitialSize, Settings.PlayerInitialSize)
+        });
+
         entityManager.AddSharedComponentData(player, PlayerLook);
     }
 
@@ -78,6 +94,7 @@ public sealed class Bootstrap
 
         PlayerLook = GetLookFromPrototype("PlayerRenderPrototype");
         FoodLook = GetLookFromPrototype("FoodRenderPrototype");
+        BotLook = GetLookFromPrototype("BotRenderPrototype");
 
         World.Active.GetOrCreateManager<CameraSystem>().SetupGameObjects();
 

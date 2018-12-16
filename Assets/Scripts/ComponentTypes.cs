@@ -3,6 +3,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 
 public struct PlayerInput : IComponentData {}
+public struct BotInput : IComponentData {}
 
 public struct Heading : IComponentData
 {
