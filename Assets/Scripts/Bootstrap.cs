@@ -20,17 +20,12 @@ public sealed class Bootstrap
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void Initialize()
     {
-        // This method creates archetypes for entities we will spawn frequently in this game.
-        // Archetypes are optional but can speed up entity spawning substantially.
-
         var entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
-        // Create player archetype
         PlayerArchetype = entityManager.CreateArchetype(
-            typeof(Position), typeof(PlayerInput), typeof(Size), typeof(Heading)
+            typeof(Position), typeof(Scale), typeof(PlayerInput), typeof(Size), typeof(Heading)
         );
         
-        // Create player archetype
         FoodArchetype = entityManager.CreateArchetype(
             typeof(Position), typeof(Size)
         );
@@ -38,20 +33,20 @@ public sealed class Bootstrap
     
     public static void NewGame()
     {
-        // Access the ECS entity manager
         var entityManager = World.Active.GetOrCreateManager<EntityManager>();
 
-        // Create an entity based on the player archetype. It will get default-constructed
-        // defaults for all the component types we listed.
         Entity player = entityManager.CreateEntity(PlayerArchetype);
 
-        // We can tweak a few components to make more sense like this.
         entityManager.SetComponentData(player, new Position {Value = new float3(0.0f, 0.0f,0.0f)});
-        //entityManager.SetComponentData(player, new Rotation {Value = quaternion.identity});
         entityManager.SetComponentData(player, new Size { Value = Settings.PlayerInitialSize });
+        entityManager.SetComponentData(player, 
+            new Scale {
+                Value = new float3(Settings.PlayerInitialSize,
+                Settings.PlayerInitialSize,
+                Settings.PlayerInitialSize)  
+            }
+        );
         entityManager.SetComponentData(player, new Heading { Value = new float3(0.0f, 0.0f, 0.0f)} );
-
-        // Finally we add a shared component which dictates the rendered look
         entityManager.AddSharedComponentData(player, PlayerLook);
     }
     

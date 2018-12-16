@@ -1,9 +1,12 @@
-﻿using Unity.Entities;
+﻿using Unity.Burst;
+using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Transforms;
+using Unity.Collections;
+using Unity.Jobs;
 
-public class MoveSystem : ComponentSystem
+public class MoveSystem : JobComponentSystem
 {
     public struct Data
     {
@@ -14,19 +17,43 @@ public class MoveSystem : ComponentSystem
     }
     
     [Inject] private Data m_Data;
+
+    [BurstCompile]
+    struct CalculatePosition : IJobParallelFor
+    {
+        public ComponentDataArray<Position> positions;
+        [ReadOnly] public ComponentDataArray<Heading> headings;
+        [ReadOnly] public ComponentDataArray<Size> sizes;
+
+        public float initialPlayerSize;
+        public float playerMaxSpeed;
+        public float dt;
+
+        public void Execute(int index)
+        {
+            float speed = (initialPlayerSize / sizes[index].Value) * playerMaxSpeed;
+            
+            float3 position = positions[index].Value;
+            position += dt * headings[index].Value * speed;
+            
+           positions[index] = new Position {Value = position};
+        }
+    }
     
-    protected override void OnUpdate()
+    protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
         Settings settings = Bootstrap.Settings;
-        
-        for (int i = 0; i < m_Data.Length; i++)
+
+        var calculatePositionsJob = new CalculatePosition
         {
-            float speed = (settings.PlayerInitialSize / m_Data.Size[i].Value) * settings.PlayerMaxSpeed;
-            
-            float3 position = m_Data.Position[i].Value;
-            position += Time.deltaTime * m_Data.Heading[i].Value * speed;
-            
-            m_Data.Position[i] = new Position {Value = position};
-        }
+            positions = m_Data.Position,
+            headings = m_Data.Heading,
+            sizes = m_Data.Size,
+            initialPlayerSize = settings.PlayerInitialSize,
+            playerMaxSpeed = settings.PlayerMaxSpeed,
+            dt = Time.deltaTime
+        };
+
+        return calculatePositionsJob.Schedule(m_Data.Length, 64, inputDeps);
     }
 }
