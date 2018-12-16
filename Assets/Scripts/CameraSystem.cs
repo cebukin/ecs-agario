@@ -6,15 +6,15 @@ using Unity.Transforms;
 public class CameraSystem : ComponentSystem
 {
     Camera _mainCamera;
-    
+
     public struct Data
     {
         public readonly int Length;
         public ComponentDataArray<PlayerInput> PlayerInput;
         public ComponentDataArray<Position> Position;
     }
-    
-    [Inject] private Data m_Data;
+
+    [Inject] Data m_Data;
 
     public void SetupGameObjects()
     {
@@ -27,10 +27,10 @@ public class CameraSystem : ComponentSystem
         {
             return;
         }
-            
+
         Vector3 targetPos = new Vector3
         (
-            m_Data.Position[0].Value.x, 
+            m_Data.Position[0].Value.x,
             m_Data.Position[0].Value.y,
             _mainCamera.transform.position.z
         );

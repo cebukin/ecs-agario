@@ -15,8 +15,8 @@ public class MoveSystem : JobComponentSystem
         public ComponentDataArray<Heading> Heading;
         public ComponentDataArray<Size> Size;
     }
-    
-    [Inject] private Data m_Data;
+
+    [Inject] Data m_Data;
 
     [BurstCompile]
     struct CalculatePosition : IJobParallelFor
@@ -33,7 +33,7 @@ public class MoveSystem : JobComponentSystem
         public void Execute(int index)
         {
             float speed = (initialPlayerSize / sizes[index].Value) * playerMaxSpeed;
-            
+
             float3 position = positions[index].Value;
             position += dt * headings[index].Value * speed;
 
@@ -43,7 +43,7 @@ public class MoveSystem : JobComponentSystem
             positions[index] = new Position {Value = position};
         }
     }
-    
+
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
         Settings settings = Bootstrap.Settings;

@@ -11,10 +11,10 @@ public sealed class Bootstrap
 {
     public static EntityArchetype PlayerArchetype;
     public static EntityArchetype FoodArchetype;
-    
+
     public static MeshInstanceRenderer PlayerLook;
     public static MeshInstanceRenderer FoodLook;
-    
+
     public static Settings Settings;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -25,12 +25,12 @@ public sealed class Bootstrap
         PlayerArchetype = entityManager.CreateArchetype(
             typeof(Position), typeof(Scale), typeof(PlayerInput), typeof(Size), typeof(Heading)
         );
-        
+
         FoodArchetype = entityManager.CreateArchetype(
             typeof(Position), typeof(Size)
         );
     }
-    
+
     public static void NewGame()
     {
         var entityManager = World.Active.GetOrCreateManager<EntityManager>();
@@ -39,17 +39,17 @@ public sealed class Bootstrap
 
         entityManager.SetComponentData(player, new Position {Value = new float3(0.0f, 0.0f,0.0f)});
         entityManager.SetComponentData(player, new Size { Value = Settings.PlayerInitialSize });
-        entityManager.SetComponentData(player, 
+        entityManager.SetComponentData(player,
             new Scale {
                 Value = new float3(Settings.PlayerInitialSize,
                 Settings.PlayerInitialSize,
-                Settings.PlayerInitialSize)  
+                Settings.PlayerInitialSize)
             }
         );
         entityManager.SetComponentData(player, new Heading { Value = new float3(0.0f, 0.0f, 0.0f)} );
         entityManager.AddSharedComponentData(player, PlayerLook);
     }
-    
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     public static void InitializeAfterSceneLoad()
     {
@@ -62,7 +62,7 @@ public sealed class Bootstrap
 
         InitializeWithScene();
     }
-    
+
     public static void InitializeWithScene()
     {
         var settingsGO = GameObject.Find("Settings");
@@ -71,7 +71,7 @@ public sealed class Bootstrap
             SceneManager.sceneLoaded += OnSceneLoaded;
             return;
         }
-        
+
         Settings = settingsGO?.GetComponent<Settings>();
         if (!Settings)
         {
@@ -80,25 +80,18 @@ public sealed class Bootstrap
 
         PlayerLook = GetLookFromPrototype("PlayerRenderPrototype");
         FoodLook = GetLookFromPrototype("FoodRenderPrototype");
-        
+
         World.Active.GetOrCreateManager<CameraSystem>().SetupGameObjects();
 
-        //EnemySpawnSystem.SetupComponentData(World.Active.GetOrCreateManager<EntityManager>());
-        //World.Active.GetOrCreateManager<UpdatePlayerHUD>().SetupGameObjects();
-
-        /*var sceneSwitcher = GameObject.Find("SceneSwitcher");
-        if (sceneSwitcher != null)
-        {*/
-            NewGame();
-        //}
+        NewGame();
     }
-    
-    private static void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
+
+    static void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
     {
         InitializeWithScene();
     }
 
-    private static MeshInstanceRenderer GetLookFromPrototype(string protoName)
+    static MeshInstanceRenderer GetLookFromPrototype(string protoName)
     {
         var proto = GameObject.Find(protoName);
         var result = proto.GetComponent<MeshInstanceRendererComponent>().Value;
