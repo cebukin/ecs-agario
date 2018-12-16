@@ -155,11 +155,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7139ec0321f234bebac1d6e377c79ecb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PlayerInitialSize: 3
-  FoodSize: 2
+  PlayerInitialSize: 2
+  FoodSize: 1
   PlayerMaxSpeed: 10
   ArenaSize: 10
-  FoodCount: 50
+  FoodCount: 20
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -212,7 +212,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 35
+  orthographic size: 20
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2

@@ -32,7 +32,8 @@ public class MoveSystem : JobComponentSystem
 
         public void Execute(int index)
         {
-            float speed = (initialPlayerSize / sizes[index].Value) * playerMaxSpeed;
+            float sizeRatio = initialPlayerSize / sizes[index].Value;
+            float speed = math.sqrt(sizeRatio) * playerMaxSpeed;
 
             float3 position = positions[index].Value;
             position += dt * headings[index].Value * speed;
