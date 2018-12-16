@@ -9,8 +9,8 @@ public class FoodSpawnSystem : ComponentSystem
     protected override void OnUpdate()
     {
         Settings settings = Bootstrap.Settings;
-        var foodEntities = GetEntities<Food>();
-        int quantityToSpawn = settings.FoodCount - foodEntities.Length;
+        var foodEntities = GetComponentGroup(typeof(Food));
+        int quantityToSpawn = settings.FoodCount - foodEntities.CalculateLength();
 
         for (int i = 0; i < quantityToSpawn; i++)
         {
