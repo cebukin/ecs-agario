@@ -80,6 +80,8 @@ public sealed class Bootstrap
 
         PlayerLook = GetLookFromPrototype("PlayerRenderPrototype");
         FoodLook = GetLookFromPrototype("FoodRenderPrototype");
+        
+        World.Active.GetOrCreateManager<CameraSystem>().SetupGameObjects();
 
         //EnemySpawnSystem.SetupComponentData(World.Active.GetOrCreateManager<EntityManager>());
         //World.Active.GetOrCreateManager<UpdatePlayerHUD>().SetupGameObjects();
