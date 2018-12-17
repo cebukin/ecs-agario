@@ -29,6 +29,11 @@ public class CollisionSystem : JobComponentSystem
         {
             for (int i = 0; i < positions.Length; i++)
             {
+                if (i == index)
+                {
+                    continue;
+                }
+
                 Size sizeA = sizes[index];
                 Size sizeB = sizes[i];
 
@@ -37,7 +42,6 @@ public class CollisionSystem : JobComponentSystem
                     // we do this to avoid registering the collision twice
                     continue;
                 }
-
 
                 if (!IsColliding(index, i))
                 {
@@ -57,13 +61,7 @@ public class CollisionSystem : JobComponentSystem
 
         bool IsColliding(int indexA, int indexB)
         {
-            if (indexA == indexB)
-            {
-                return false;
-            }
-
             float distance = math.distance(positions[indexA].Value, positions[indexB].Value);
-
             float maxRadius = math.max(sizes[indexA].Value / 2.0f, sizes[indexB].Value / 2.0f);
             return distance < maxRadius;
         }
