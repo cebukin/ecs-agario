@@ -8,52 +8,75 @@ using Unity.Collections;
 using Unity.Jobs;
 
 [UpdateAfter(typeof(MoveSystem))]
-public class CollisionSystem : ComponentSystem
+public class CollisionSystem : JobComponentSystem
 {
-    public struct PlayerData
+    public struct Data
     {
         public readonly int Length;
         public ComponentDataArray<Position> Position;
         public ComponentDataArray<Size> Size;
-        public ComponentDataArray<Player> Player;
     }
 
-    [Inject] PlayerData _mPlayerData;
+    [Inject] Data m_Data;
 
-    public struct FoodData
+    [BurstCompile]
+    struct CollisionJob : IJobParallelFor
     {
-        public readonly int Length;
-        public ComponentDataArray<Position> Position;
-        public ComponentDataArray<Size> Size;
-        public ComponentDataArray<Food> Food;
-        public EntityArray Entities;
-    }
+        [ReadOnly] public ComponentDataArray<Position> positions;
+        public ComponentDataArray<Size> sizes;
 
-    [Inject] FoodData _mFoodData;
-
-    protected override void OnUpdate()
-    {
-        for (int i = 0; i < _mPlayerData.Length; i++)
+        public void Execute(int index)
         {
-            for (int j = 0; j < _mFoodData.Length; j++)
+            for (int i = 0; i < positions.Length; i++)
             {
-                if (!IsColliding(_mPlayerData.Position[i], _mFoodData.Position[j], _mPlayerData.Size[i],
-                    _mFoodData.Size[j]))
+                Size sizeA = sizes[index];
+                Size sizeB = sizes[i];
+
+                if (sizeB.Value > sizeA.Value)
+                {
+                    // we do this to avoid registering the collision twice
+                    continue;
+                }
+
+
+                if (!IsColliding(index, i))
                 {
                     continue;
                 }
 
-                float size = _mPlayerData.Size[i].Value + _mFoodData.Size[j].Value;
-                _mPlayerData.Size[i] = new Size { Value = size };
-                PostUpdateCommands.DestroyEntity(_mFoodData.Entities[j]);
+                // index grows bigger
+                // i dies
+
+                sizeA.Value += sizeB.Value;
+                sizeB.Value = 0.0f; // will be destroyed later by another system
+
+                sizes[index] = sizeA;
+                sizes[i] = sizeB;
             }
+        }
+
+        bool IsColliding(int indexA, int indexB)
+        {
+            if (indexA == indexB)
+            {
+                return false;
+            }
+
+            float distance = math.distance(positions[indexA].Value, positions[indexB].Value);
+
+            float maxRadius = math.max(sizes[indexA].Value / 2.0f, sizes[indexB].Value / 2.0f);
+            return distance < maxRadius;
         }
     }
 
-    bool IsColliding(Position pA, Position pB, Size sA, Size sB)
+    protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        float distance = math.distance(pA.Value, pB.Value);
-        float maxRadius = math.max(sA.Value / 2.0f, sB.Value / 2.0f);
-        return distance < maxRadius;
+        var collisionJob = new CollisionJob
+        {
+            positions = m_Data.Position,
+            sizes = m_Data.Size
+        };
+
+        return collisionJob.Schedule(m_Data.Length, 64, inputDeps);
     }
 }

@@ -6,7 +6,7 @@ using Unity.Transforms;
 using Unity.Collections;
 using Unity.Jobs;
 
-[UpdateAfter(typeof(CollisionSystem))]
+[UpdateAfter(typeof(DestructionSystem))]
 public class ScaleSystem : JobComponentSystem
 {
     public struct Data
