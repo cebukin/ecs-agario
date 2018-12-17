@@ -12,6 +12,7 @@ public class CameraSystem : ComponentSystem
         public readonly int Length;
         public ComponentDataArray<PlayerInput> PlayerInput;
         public ComponentDataArray<Position> Position;
+        public ComponentDataArray<Size> Size;
     }
 
     [Inject] Data m_Data;
@@ -35,6 +36,11 @@ public class CameraSystem : ComponentSystem
             _mainCamera.transform.position.z
         );
 
+        Settings settings = Bootstrap.Settings;
+
         _mainCamera.transform.position = Vector3.Lerp(_mainCamera.transform.position, targetPos, 0.1f);
+        float sizeRatio = m_Data.Size[0].Value / settings.PlayerInitialSize;
+        float newCameraSize = math.sqrt(sizeRatio) * settings.InitialCameraSize;
+        _mainCamera.orthographicSize = math.lerp(_mainCamera.orthographicSize, newCameraSize, 0.1f);
     }
 }

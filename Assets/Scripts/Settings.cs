@@ -11,4 +11,5 @@ public class Settings : MonoBehaviour
     public int ArenaSize;
     public int FoodCount;
     public int BotCount;
+    public int InitialCameraSize;
 }
