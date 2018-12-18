@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -12,7 +13,6 @@ using Unity.Jobs;
 public class GridSystem : ComponentSystem
 {
     public List<List<List<int>>> grid;
-    int _nPartitions = 10;
 
     public struct Data
     {
@@ -25,12 +25,11 @@ public class GridSystem : ComponentSystem
 
     void Init()
     {
-        _nPartitions = (int) math.floor(Bootstrap.Settings.ArenaSize * 10 / Bootstrap.Settings.PlayerMaxSize);
         grid = new List<List<List<int>>>();
-        for (int i = 0; i < _nPartitions; i++)
+        for (int i = 0; i < Bootstrap.Settings.NPartitions; i++)
         {
             List<List<int>> row = new List<List<int>>();
-            for (int j = 0; j < _nPartitions; j++)
+            for (int j = 0; j < Bootstrap.Settings.NPartitions; j++)
             {
                 row.Add(new List<int>());
             }
@@ -41,11 +40,11 @@ public class GridSystem : ComponentSystem
 
     void ClearGrid()
     {
-        for (int i = 0; i < _nPartitions; i++)
+        foreach (var t in grid)
         {
-            for (int j = 0; j < _nPartitions; j++)
+            foreach (var t1 in t)
             {
-                grid[i][j].Clear();
+                t1.Clear();
             }
         }
     }
@@ -53,9 +52,9 @@ public class GridSystem : ComponentSystem
     int GetGridIndex(float pos)
     {
         int arenaSize = Bootstrap.Settings.ArenaSize * 10;
-        float gridSize = (float) arenaSize / _nPartitions;
+        float gridSize = (float) arenaSize / Bootstrap.Settings.NPartitions;
         float gridPos = pos + arenaSize / 2.0f;
-        return (int) math.clamp(math.floor(gridPos / gridSize), 0, _nPartitions - 1);
+        return (int) math.clamp(math.floor(gridPos / gridSize), 0, Bootstrap.Settings.NPartitions - 1);
     }
 
     int GetMinGridPosition(float pos, float radius)
@@ -74,7 +73,7 @@ public class GridSystem : ComponentSystem
     {
         float3 position = m_Data.Position[index].Value;
         float radius = m_Data.Size[index].Value / 2.0f;
-
+        
         for (int i = GetMinGridPosition(position.x, radius); i <= GetMaxGridPosition(position.x, radius); i++)
         {
             for (int j = GetMinGridPosition(position.y, radius); j <= GetMaxGridPosition(position.y, radius); j++)
