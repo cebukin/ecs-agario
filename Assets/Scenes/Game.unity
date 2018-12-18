@@ -156,6 +156,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   PlayerInitialSize: 2
+  PlayerMaxSize: 20
   FoodSize: 1
   PlayerMaxSpeed: 10
   ArenaSize: 10

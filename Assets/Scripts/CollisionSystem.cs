@@ -24,6 +24,7 @@ public class CollisionSystem : JobComponentSystem
     {
         [ReadOnly] public ComponentDataArray<Position> positions;
         public ComponentDataArray<Size> sizes;
+        public float maxPlayerSize;
 
         public void Execute(int index)
         {
@@ -51,7 +52,7 @@ public class CollisionSystem : JobComponentSystem
                 // index grows bigger
                 // i dies
 
-                sizeA.Value += sizeB.Value;
+                sizeA.Value = math.min(sizeA.Value + sizeB.Value, maxPlayerSize);
                 sizeB.Value = 0.0f; // will be destroyed later by another system
 
                 sizes[index] = sizeA;
@@ -72,7 +73,8 @@ public class CollisionSystem : JobComponentSystem
         var collisionJob = new CollisionJob
         {
             positions = m_Data.Position,
-            sizes = m_Data.Size
+            sizes = m_Data.Size,
+            maxPlayerSize = Bootstrap.Settings.PlayerMaxSize
         };
 
         return collisionJob.Schedule(m_Data.Length, 64, inputDeps);

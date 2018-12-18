@@ -6,6 +6,7 @@ using UnityEngine.Serialization;
 public class Settings : MonoBehaviour
 {
     public float PlayerInitialSize;
+    public float PlayerMaxSize;
     public float FoodSize;
     public float PlayerMaxSpeed;
     public int ArenaSize;
