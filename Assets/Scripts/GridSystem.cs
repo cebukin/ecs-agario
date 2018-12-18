@@ -73,7 +73,7 @@ public class GridSystem : ComponentSystem
     {
         float3 position = m_Data.Position[index].Value;
         float radius = m_Data.Size[index].Value / 2.0f;
-        
+
         for (int i = GetMinGridPosition(position.x, radius); i <= GetMaxGridPosition(position.x, radius); i++)
         {
             for (int j = GetMinGridPosition(position.y, radius); j <= GetMaxGridPosition(position.y, radius); j++)

@@ -38,8 +38,10 @@ public class MoveSystem : JobComponentSystem
             float3 position = positions[index].Value;
             position += dt * headings[index].Value * speed;
 
-            position.x = Mathf.Clamp(position.x, -arenaSize / 2.0f, arenaSize / 2.0f);
-            position.y = Mathf.Clamp(position.y, -arenaSize / 2.0f, arenaSize / 2.0f);
+            float size = sizes[index].Value;
+
+            position.x = Mathf.Clamp(position.x, -arenaSize/2.0f + size/2.0f, arenaSize/2.0f - size/2.0f);
+            position.y = Mathf.Clamp(position.y, -arenaSize/2.0f + size/2.0f, arenaSize/2.0f - size/2.0f);
 
             positions[index] = new Position {Value = position};
         }
