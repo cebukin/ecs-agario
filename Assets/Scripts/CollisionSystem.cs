@@ -7,7 +7,7 @@ using Unity.Transforms;
 using Unity.Collections;
 using Unity.Jobs;
 
-[UpdateAfter(typeof(MoveSystem))]
+[UpdateAfter(typeof(GridSystem))]
 public class CollisionSystem : JobComponentSystem
 {
     public struct Data
