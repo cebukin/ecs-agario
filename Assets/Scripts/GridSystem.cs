@@ -12,21 +12,7 @@ using Unity.Jobs;
 public class GridSystem : ComponentSystem
 {
     public List<List<List<int>>> grid;
-    readonly int NPartitions = 10;
-
-    protected override void OnCreateManager()
-    {
-        grid = new List<List<List<int>>>();
-        for (int i = 0; i < NPartitions; i++)
-        {
-            List<List<int>> row = new List<List<int>>();
-            for (int j = 0; j < NPartitions; j++)
-            {
-                row.Add(new List<int>());
-            }
-            grid.Add(row);
-        }
-    }
+    int _nPartitions = 10;
 
     public struct Data
     {
@@ -37,11 +23,27 @@ public class GridSystem : ComponentSystem
 
     [Inject] Data m_Data;
 
+    void Init()
+    {
+        _nPartitions = (int) math.floor(Bootstrap.Settings.ArenaSize * 10 / Bootstrap.Settings.PlayerMaxSize);
+        grid = new List<List<List<int>>>();
+        for (int i = 0; i < _nPartitions; i++)
+        {
+            List<List<int>> row = new List<List<int>>();
+            for (int j = 0; j < _nPartitions; j++)
+            {
+                row.Add(new List<int>());
+            }
+
+            grid.Add(row);
+        }
+    }
+
     void ClearGrid()
     {
-        for (int i = 0; i < NPartitions; i++)
+        for (int i = 0; i < _nPartitions; i++)
         {
-            for (int j = 0; j < NPartitions; j++)
+            for (int j = 0; j < _nPartitions; j++)
             {
                 grid[i][j].Clear();
             }
@@ -51,9 +53,9 @@ public class GridSystem : ComponentSystem
     int GetGridIndex(float pos)
     {
         int arenaSize = Bootstrap.Settings.ArenaSize * 10;
-        float gridSize = (float) arenaSize / NPartitions;
+        float gridSize = (float) arenaSize / _nPartitions;
         float gridPos = pos + arenaSize / 2.0f;
-        return (int) math.clamp(math.floor(gridPos / gridSize), 0, NPartitions - 1);
+        return (int) math.clamp(math.floor(gridPos / gridSize), 0, _nPartitions - 1);
     }
 
     int GetMinGridPosition(float pos, float radius)
@@ -92,6 +94,11 @@ public class GridSystem : ComponentSystem
 
     protected override void OnUpdate()
     {
+        if (grid == null)
+        {
+            Init();
+        }
+
         ClearGrid();
         PopulateGrid();
     }
