@@ -1,16 +1,25 @@
-﻿using Unity.Entities;
+﻿using System.Runtime.InteropServices;
+using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Transforms;
 using Random = UnityEngine.Random;
 
+[AlwaysUpdateSystem]
 public class FoodSpawnSystem : ComponentSystem
 {
+    public struct Data
+    {
+        public readonly int Length;
+        public ComponentDataArray<Food> Food;
+    }
+
+    [Inject] Data m_Data;
+
     protected override void OnUpdate()
     {
         Settings settings = Bootstrap.Settings;
-        var foodEntities = GetComponentGroup(typeof(Food));
-        int quantityToSpawn = settings.FoodCount - foodEntities.CalculateLength();
+        int quantityToSpawn = settings.FoodCount - m_Data.Length;
 
         for (int i = 0; i < quantityToSpawn; i++)
         {

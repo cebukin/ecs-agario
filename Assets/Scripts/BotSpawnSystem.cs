@@ -4,13 +4,21 @@ using UnityEngine;
 using Unity.Transforms;
 using Random = UnityEngine.Random;
 
+[AlwaysUpdateSystem]
 public class BotSpawnSystem : ComponentSystem
 {
+    public struct Data
+    {
+        public readonly int Length;
+        public ComponentDataArray<BotInput> Food;
+    }
+
+    [Inject] Data m_Data;
+
     protected override void OnUpdate()
     {
         Settings settings = Bootstrap.Settings;
-        var entities = GetComponentGroup(typeof(BotInput));
-        int quantityToSpawn = settings.BotCount - entities.CalculateLength();
+        int quantityToSpawn = settings.BotCount - m_Data.Length;
 
         for (int i = 0; i < quantityToSpawn; i++)
         {
