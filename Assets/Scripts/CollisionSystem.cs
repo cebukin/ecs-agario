@@ -43,23 +43,23 @@ public class CollisionSystem : JobComponentSystem
             Size sizeA = Sizes[indexA];
             Size sizeB = Sizes[indexB];
 
+            float sizeAValue = sizeA.Value;
+            float sizeBValue = sizeB.Value;
+
             if (!IsColliding(indexA, indexB))
             {
                 return;
             }
 
-            // index grows bigger
-            // i dies
-
-            if (sizeA.Value > sizeB.Value)
+            if (sizeAValue > sizeBValue)
             {
-                sizeA.Value = math.min(sizeA.Value + sizeB.Value, MaxPlayerSize);
+                sizeA.Value = math.min(sizeAValue + sizeBValue, MaxPlayerSize);
                 sizeB.Value = 0.0f; // will be destroyed later by another system
             }
             else
             {
                 sizeA.Value = 0.0f; // will be destroyed later by another system
-                sizeB.Value = math.min(sizeA.Value + sizeB.Value, MaxPlayerSize);
+                sizeB.Value = math.min(sizeAValue + sizeBValue, MaxPlayerSize);
             }
 
             Sizes[indexA] = sizeA;
