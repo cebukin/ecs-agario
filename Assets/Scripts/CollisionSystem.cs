@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.Tracing;
+using System.Linq;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -25,60 +28,79 @@ public class CollisionSystem : JobComponentSystem
     struct CollisionJob : IJobParallelFor
     {
         [ReadOnly] public ComponentDataArray<Position> Positions;
+        [DeallocateOnJobCompletion][ReadOnly] public NativeArray<int> CandidatesA;
+        [DeallocateOnJobCompletion][ReadOnly] public NativeArray<int> CandidatesB;
+
+        [NativeDisableParallelForRestriction]
         public ComponentDataArray<Size> Sizes;
+
         public float MaxPlayerSize;
 
         public void Execute(int index)
         {
-            for (int i = 0; i < Positions.Length; i++)
+            int indexA = CandidatesA[index];
+            int indexB = CandidatesB[index];
+            Size sizeA = Sizes[indexA];
+            Size sizeB = Sizes[indexB];
+
+            if (!IsColliding(indexA, indexB))
             {
-                if (i == index)
-                {
-                    continue;
-                }
+                return;
+            }
 
-                Size sizeA = Sizes[index];
-                Size sizeB = Sizes[i];
+            // index grows bigger
+            // i dies
 
-                if (sizeB.Value > sizeA.Value)
-                {
-                    // we do this to avoid registering the collision twice
-                    continue;
-                }
-
-                if (!IsColliding(index, i))
-                {
-                    continue;
-                }
-
-                // index grows bigger
-                // i dies
-
+            if (sizeA.Value > sizeB.Value)
+            {
                 sizeA.Value = math.min(sizeA.Value + sizeB.Value, MaxPlayerSize);
                 sizeB.Value = 0.0f; // will be destroyed later by another system
-
-                Sizes[index] = sizeA;
-                Sizes[i] = sizeB;
             }
+            else
+            {
+                sizeA.Value = 0.0f; // will be destroyed later by another system
+                sizeB.Value = math.min(sizeA.Value + sizeB.Value, MaxPlayerSize);
+            }
+
+            Sizes[indexA] = sizeA;
+            Sizes[indexB] = sizeB;
         }
 
         bool IsColliding(int indexA, int indexB)
         {
-            float distance = math.distance(Positions[indexA].Value, Positions[indexB].Value);
+            float distance = Distance(indexA, indexB);
             float maxRadius = math.max(Sizes[indexA].Value / 2.0f, Sizes[indexB].Value / 2.0f);
             return distance < maxRadius;
+        }
+
+        float Distance(int indexA, int indexB)
+        {
+            return math.distance(Positions[indexA].Value, Positions[indexB].Value);
         }
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
+        var candidatePairs = _candidatesSystem.CandidatePairs;
+        int nPairs = candidatePairs.Length;
+        NativeArray<int> candidatesA = new NativeArray<int>(nPairs, Allocator.TempJob);
+        NativeArray<int> candidatesB = new NativeArray<int>(nPairs, Allocator.TempJob);
+
+        for (int i = 0; i < nPairs; i++)
+        {
+            candidatesA[i] = candidatePairs[i].x;
+            candidatesB[i] = candidatePairs[i].y;
+        }
+
         var collisionJob = new CollisionJob
         {
             Positions = m_Data.Position,
             Sizes = m_Data.Size,
-            MaxPlayerSize = Bootstrap.Settings.PlayerMaxSize
+            MaxPlayerSize = Bootstrap.Settings.PlayerMaxSize,
+            CandidatesA = candidatesA,
+            CandidatesB = candidatesB
         };
 
-        return collisionJob.Schedule(m_Data.Length, 64, inputDeps);
+        return collisionJob.Schedule(nPairs, 64, inputDeps);
     }
 }

@@ -12,48 +12,35 @@ using Unity.Jobs;
 [UpdateAfter(typeof(GridSystem))]
 public class CandidatesSystem : ComponentSystem
 {
-    List<List<NativeArray<int>>> _candidates;
+    HashSet<int2> _candidatePairs;
     [Inject] GridSystem _gridSystem;
 
-    public NativeArray<int> GetCandidates(Position pos)
+    public int2[] CandidatePairs => _candidatePairs.ToArray();
+
+    protected override void OnCreateManager()
     {
-        int2 coordinates = Util.GetGridIndex(pos);
-        return _candidates[coordinates.x][coordinates.y];
+        _candidatePairs = new HashSet<int2>();
     }
 
-    void Init()
+    void AddCandidatePair(int a, int b)
     {
-        if (_candidates != null)
+        if (a == b)
         {
             return;
         }
 
-        _candidates = new List<List<NativeArray<int>>>();
-        for (int i = 0; i < Bootstrap.Settings.NPartitions; i++)
-        {
-            List<NativeArray<int>> row = new List<NativeArray<int>>();
-            for (int j = 0; j < Bootstrap.Settings.NPartitions; j++)
-            {
-                row.Add(new NativeArray<int>(1, Allocator.Persistent));
-            }
-            _candidates.Add(row);
-        }
+        int2 pair = a > b ? new int2(a, b) : new int2(b, a);
+        _candidatePairs.Add(pair);
     }
 
-    protected override void OnDestroyManager()
+    void AddCandidatePairs(IReadOnlyList<int> candidatesArray)
     {
-        CleanUp();
-    }
-
-    void CleanUp()
-    {
-        foreach (var row in _candidates)
+        for (int i = 0; i < candidatesArray.Count; i++)
         {
-            foreach (var entry in row)
+            for (int j = i + 1; j < candidatesArray.Count; j++)
             {
-                entry.Dispose();
+                AddCandidatePair(candidatesArray[i], candidatesArray[j]);
             }
-            row.Clear();
         }
     }
 
@@ -90,20 +77,14 @@ public class CandidatesSystem : ComponentSystem
                     }
                 }
 
-                if (_candidates[i][j].Length != allCandidates.Count)
-                {
-                    _candidates[i][j].Dispose();
-                    _candidates[i][j] = new NativeArray<int>(allCandidates.Count, Allocator.Persistent);
-                }
-
-                _candidates[i][j].CopyFrom(allCandidates.ToArray());
+                AddCandidatePairs(allCandidates.ToArray());
             }
         }
     }
 
     protected override void OnUpdate()
     {
-        Init();
+        _candidatePairs.Clear();
         BuildCandidates();
     }
 }
