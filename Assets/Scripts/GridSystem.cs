@@ -12,7 +12,7 @@ using Unity.Jobs;
 [UpdateAfter(typeof(MoveSystem))]
 public class GridSystem : ComponentSystem
 {
-    public List<List<List<int>>> grid;
+    public List<List<List<int>>> Grid;
 
     public struct Data
     {
@@ -25,7 +25,12 @@ public class GridSystem : ComponentSystem
 
     void Init()
     {
-        grid = new List<List<List<int>>>();
+        if (Grid != null)
+        {
+            return;
+        }
+
+        Grid = new List<List<List<int>>>();
         for (int i = 0; i < Bootstrap.Settings.NPartitions; i++)
         {
             List<List<int>> row = new List<List<int>>();
@@ -34,13 +39,13 @@ public class GridSystem : ComponentSystem
                 row.Add(new List<int>());
             }
 
-            grid.Add(row);
+            Grid.Add(row);
         }
     }
 
     void ClearGrid()
     {
-        foreach (var t in grid)
+        foreach (var t in Grid)
         {
             foreach (var t1 in t)
             {
@@ -78,7 +83,7 @@ public class GridSystem : ComponentSystem
         {
             for (int j = GetMinGridPosition(position.y, radius); j <= GetMaxGridPosition(position.y, radius); j++)
             {
-                grid[i][j].Add(index);
+                Grid[i][j].Add(index);
             }
         }
     }
@@ -93,11 +98,7 @@ public class GridSystem : ComponentSystem
 
     protected override void OnUpdate()
     {
-        if (grid == null)
-        {
-            Init();
-        }
-
+        Init();
         ClearGrid();
         PopulateGrid();
     }
