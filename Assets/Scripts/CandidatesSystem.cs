@@ -17,9 +17,20 @@ public class CandidatesSystem : ComponentSystem
 
     public int2[] CandidatePairs => _candidatePairs.ToArray();
 
+    class PointComparer : IEqualityComparer<int2> {
+        public bool Equals(int2 a, int2 b) {
+            return a.x == b.x && a.y == b.y;
+        }
+
+        public int GetHashCode(int2 obj) {
+            // Perfect hash for practical bitmaps, their width/height is never >= 65536
+            return (obj.y << 16) ^ obj.x;
+        }
+    }
+
     protected override void OnCreateManager()
     {
-        _candidatePairs = new HashSet<int2>();
+        _candidatePairs = new HashSet<int2>(new PointComparer());
     }
 
     void AddCandidatePair(int a, int b)
