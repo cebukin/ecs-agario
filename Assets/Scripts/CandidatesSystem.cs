@@ -17,10 +17,8 @@ public class CandidatesSystem : ComponentSystem
 
     public NativeArray<int> GetCandidates(Position pos)
     {
-        int x = (int) pos.Value.x; // TODO
-        int y = (int) pos.Value.y; // TODO
-
-        return _candidates[x][y];
+        int2 coordinates = Util.GetGridIndex(pos);
+        return _candidates[coordinates.x][coordinates.y];
     }
 
     void Init()

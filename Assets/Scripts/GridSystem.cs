@@ -54,24 +54,16 @@ public class GridSystem : ComponentSystem
         }
     }
 
-    int GetGridIndex(float pos)
-    {
-        int arenaSize = Bootstrap.Settings.ArenaSize * 10;
-        float gridSize = (float) arenaSize / Bootstrap.Settings.NPartitions;
-        float gridPos = pos + arenaSize / 2.0f;
-        return (int) math.clamp(math.floor(gridPos / gridSize), 0, Bootstrap.Settings.NPartitions - 1);
-    }
-
     int GetMinGridPosition(float pos, float radius)
     {
         float minPos = pos - radius;
-        return GetGridIndex(minPos);
+        return Util.GetGridIndex(minPos);
     }
 
     int GetMaxGridPosition(float pos, float radius)
     {
         float maxPos = pos + radius;
-        return GetGridIndex(maxPos);
+        return Util.GetGridIndex(maxPos);
     }
 
     void PopulateGrid(int index)
