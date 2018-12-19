@@ -19,24 +19,26 @@ public class CollisionSystem : JobComponentSystem
 
     [Inject] Data m_Data;
 
+    [Inject] CandidatesSystem _candidatesSystem;
+
     [BurstCompile]
     struct CollisionJob : IJobParallelFor
     {
-        [ReadOnly] public ComponentDataArray<Position> positions;
-        public ComponentDataArray<Size> sizes;
-        public float maxPlayerSize;
+        [ReadOnly] public ComponentDataArray<Position> Positions;
+        public ComponentDataArray<Size> Sizes;
+        public float MaxPlayerSize;
 
         public void Execute(int index)
         {
-            for (int i = 0; i < positions.Length; i++)
+            for (int i = 0; i < Positions.Length; i++)
             {
                 if (i == index)
                 {
                     continue;
                 }
 
-                Size sizeA = sizes[index];
-                Size sizeB = sizes[i];
+                Size sizeA = Sizes[index];
+                Size sizeB = Sizes[i];
 
                 if (sizeB.Value > sizeA.Value)
                 {
@@ -52,18 +54,18 @@ public class CollisionSystem : JobComponentSystem
                 // index grows bigger
                 // i dies
 
-                sizeA.Value = math.min(sizeA.Value + sizeB.Value, maxPlayerSize);
+                sizeA.Value = math.min(sizeA.Value + sizeB.Value, MaxPlayerSize);
                 sizeB.Value = 0.0f; // will be destroyed later by another system
 
-                sizes[index] = sizeA;
-                sizes[i] = sizeB;
+                Sizes[index] = sizeA;
+                Sizes[i] = sizeB;
             }
         }
 
         bool IsColliding(int indexA, int indexB)
         {
-            float distance = math.distance(positions[indexA].Value, positions[indexB].Value);
-            float maxRadius = math.max(sizes[indexA].Value / 2.0f, sizes[indexB].Value / 2.0f);
+            float distance = math.distance(Positions[indexA].Value, Positions[indexB].Value);
+            float maxRadius = math.max(Sizes[indexA].Value / 2.0f, Sizes[indexB].Value / 2.0f);
             return distance < maxRadius;
         }
     }
@@ -72,9 +74,9 @@ public class CollisionSystem : JobComponentSystem
     {
         var collisionJob = new CollisionJob
         {
-            positions = m_Data.Position,
-            sizes = m_Data.Size,
-            maxPlayerSize = Bootstrap.Settings.PlayerMaxSize
+            Positions = m_Data.Position,
+            Sizes = m_Data.Size,
+            MaxPlayerSize = Bootstrap.Settings.PlayerMaxSize
         };
 
         return collisionJob.Schedule(m_Data.Length, 64, inputDeps);
