@@ -38,9 +38,11 @@ public class CameraSystem : ComponentSystem
 
         Settings settings = Bootstrap.Settings;
 
-        _mainCamera.transform.position = Vector3.Lerp(_mainCamera.transform.position, targetPos, 0.1f);
+        float progress = 10 * Time.deltaTime;
+
+        _mainCamera.transform.position = Vector3.Lerp(_mainCamera.transform.position, targetPos, progress);
         float sizeRatio = m_Data.Size[0].Value / settings.PlayerInitialSize;
         float newCameraSize = math.sqrt(sizeRatio) * settings.InitialCameraSize;
-        _mainCamera.orthographicSize = math.lerp(_mainCamera.orthographicSize, newCameraSize, 0.1f);
+        _mainCamera.orthographicSize = math.lerp(_mainCamera.orthographicSize, newCameraSize, progress);
     }
 }
