@@ -1,13 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using UnityEngine;
-using Unity.Transforms;
-using Unity.Collections;
-using Unity.Jobs;
 
 [UpdateAfter(typeof(GridSystem))]
 public class CandidatesSystem : ComponentSystem
@@ -16,17 +12,6 @@ public class CandidatesSystem : ComponentSystem
     [Inject] GridSystem _gridSystem;
 
     public int2[] CandidatePairs => _candidatePairs.ToArray();
-
-    class PointComparer : IEqualityComparer<int2> {
-        public bool Equals(int2 a, int2 b) {
-            return a.x == b.x && a.y == b.y;
-        }
-
-        public int GetHashCode(int2 obj) {
-            // Perfect hash for practical bitmaps, their width/height is never >= 65536
-            return (obj.y << 16) ^ obj.x;
-        }
-    }
 
     protected override void OnCreateManager()
     {
@@ -63,7 +48,20 @@ public class CandidatesSystem : ComponentSystem
         {
             for (int j = 0; j < nPartitions; j++)
             {
-                AddCandidatePairs(_gridSystem.Grid[i][j]);
+                int key = Util.GetHashCode(i, j);
+                int value;
+                NativeMultiHashMapIterator<int> iterator;
+                if (!_gridSystem.Grid.TryGetFirstValue(key, out value, out iterator))
+                {
+                    continue;
+                }
+
+                List<int> candidates = new List<int>();
+                do
+                {
+                    candidates.Add(value);
+                } while (_gridSystem.Grid.TryGetNextValue(out value, ref iterator));
+                AddCandidatePairs(candidates);
             }
         }
     }
