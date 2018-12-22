@@ -63,32 +63,7 @@ public class CandidatesSystem : ComponentSystem
         {
             for (int j = 0; j < nPartitions; j++)
             {
-                // collect all candidates
-                SortedSet<int> allCandidates = new SortedSet<int>();
-                for (int m = -1; m <= 1; m++)
-                {
-                    int xGridPos = i + m;
-                    if (xGridPos < 0 || xGridPos > nPartitions - 1)
-                    {
-                        continue;
-                    }
-                    for (int n = -1; n <= 1; n++)
-                    {
-                        int yGridPos = j + n;
-                        if (yGridPos < 0 || yGridPos > nPartitions - 1)
-                        {
-                            continue;
-                        }
-
-                        List<int> candidates = _gridSystem.Grid[xGridPos][yGridPos];
-                        foreach (int entry in candidates)
-                        {
-                            allCandidates.Add(entry);
-                        }
-                    }
-                }
-
-                AddCandidatePairs(allCandidates.ToArray());
+                AddCandidatePairs(_gridSystem.Grid[i][j]);
             }
         }
     }
