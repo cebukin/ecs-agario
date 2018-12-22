@@ -8,42 +8,29 @@ using Unity.Jobs;
 
 public class MoveSystem : JobComponentSystem
 {
-    public struct Data
-    {
-        public readonly int Length;
-        public ComponentDataArray<Position> Position;
-        public ComponentDataArray<Heading> Heading;
-        public ComponentDataArray<Size> Size;
-    }
-
-    [Inject] Data m_Data;
-
     [BurstCompile]
-    struct CalculatePosition : IJobParallelFor
+    struct CalculatePosition : IJobProcessComponentData<Position, Heading, Size>
     {
-        public ComponentDataArray<Position> positions;
-        [ReadOnly] public ComponentDataArray<Heading> headings;
-        [ReadOnly] public ComponentDataArray<Size> sizes;
-
-        public float initialPlayerSize;
-        public float playerMaxSpeed;
+        public float InitialPlayerSize;
+        public float PlayerMaxSpeed;
         public float dt;
-        public float arenaSize;
+        public float ArenaSize;
 
-        public void Execute(int index)
+        public void Execute(ref Position position, [ReadOnly] ref Heading heading, [ReadOnly] ref Size size)
         {
-            float sizeRatio = initialPlayerSize / sizes[index].Value;
-            float speed = math.sqrt(sizeRatio) * playerMaxSpeed;
+            float sizeRatio = InitialPlayerSize / size.Value;
+            float speed = math.sqrt(sizeRatio) * PlayerMaxSpeed;
 
-            float3 position = positions[index].Value;
-            position += dt * headings[index].Value * speed;
+            float3 positionValue = position.Value;
+            positionValue += dt * heading.Value * speed;
 
-            float size = sizes[index].Value;
+            float minValue = -ArenaSize / 2.0f + size.Value / 2.0f;
+            float maxValue = ArenaSize / 2.0f - size.Value / 2.0f;
 
-            position.x = Mathf.Clamp(position.x, -arenaSize/2.0f + size/2.0f, arenaSize/2.0f - size/2.0f);
-            position.y = Mathf.Clamp(position.y, -arenaSize/2.0f + size/2.0f, arenaSize/2.0f - size/2.0f);
+            positionValue.x = Mathf.Clamp(positionValue.x, minValue, maxValue);
+            positionValue.y = Mathf.Clamp(positionValue.y, minValue, maxValue);
 
-            positions[index] = new Position {Value = position};
+            position = new Position {Value = positionValue};
         }
     }
 
@@ -53,15 +40,12 @@ public class MoveSystem : JobComponentSystem
 
         var calculatePositionsJob = new CalculatePosition
         {
-            positions = m_Data.Position,
-            headings = m_Data.Heading,
-            sizes = m_Data.Size,
-            initialPlayerSize = settings.PlayerInitialSize,
-            playerMaxSpeed = settings.PlayerMaxSpeed,
+            InitialPlayerSize = settings.PlayerInitialSize,
+            PlayerMaxSpeed = settings.PlayerMaxSpeed,
             dt = Time.deltaTime,
-            arenaSize = settings.ArenaSize * 10
+            ArenaSize = settings.ArenaSize * 10
         };
 
-        return calculatePositionsJob.Schedule(m_Data.Length, 64, inputDeps);
+        return calculatePositionsJob.Schedule(this, inputDeps);
     }
 }
