@@ -13,5 +13,6 @@ public class Settings : MonoBehaviour
     public int BotCount;
     public int InitialCameraSize;
 
-    public int NPartitions => (int) math.floor(ArenaSize * 10 / PlayerMaxSize);
+    public float CellSize => PlayerMaxSize * 4;
+
 }

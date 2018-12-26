@@ -20,6 +20,11 @@ public class GridSystem : ComponentSystem
         Grid = new NativeMultiHashMap<int, int>(1, Allocator.TempJob);
     }
 
+    protected override void OnDestroyManager()
+    {
+        Grid.Dispose();
+    }
+
     public struct Data
     {
         public readonly int Length;
@@ -33,36 +38,13 @@ public class GridSystem : ComponentSystem
     struct PopulateGridJob : IJobParallelFor
     {
         [ReadOnly] public ComponentDataArray<Position> Positions;
-        [ReadOnly] public ComponentDataArray<Size> Sizes;
         public NativeMultiHashMap<int, int>.Concurrent HashMap;
-
-        public int ArenaSize;
-        public int NPartitions;
+        public float CellSize;
 
         public void Execute(int index)
         {
             float3 position = Positions[index].Value;
-            float radius = Sizes[index].Value / 2.0f;
-
-            for (int i = GetMinGridPosition(position.x, radius); i <= GetMaxGridPosition(position.x, radius); i++)
-            {
-                for (int j = GetMinGridPosition(position.y, radius); j <= GetMaxGridPosition(position.y, radius); j++)
-                {
-                    HashMap.Add(Util.GetHashCode(i, j), index);
-                }
-            }
-        }
-
-        int GetMinGridPosition(float pos, float radius)
-        {
-            float minPos = pos - radius;
-            return Util.GetGridIndex(minPos, ArenaSize, NPartitions);
-        }
-
-        int GetMaxGridPosition(float pos, float radius)
-        {
-            float maxPos = pos + radius;
-            return Util.GetGridIndex(maxPos, ArenaSize, NPartitions);
+            HashMap.Add(Util.Hash(position, CellSize), index);
         }
     }
 
@@ -76,9 +58,7 @@ public class GridSystem : ComponentSystem
         {
             HashMap = Grid.ToConcurrent(),
             Positions = m_Data.Position,
-            Sizes = m_Data.Size,
-            ArenaSize = Bootstrap.Settings.ArenaSize * 10,
-            NPartitions = Bootstrap.Settings.NPartitions
+            CellSize = Bootstrap.Settings.CellSize
         };
 
         var jobHandle = populateGridJob.Schedule(m_Data.Length, 64);

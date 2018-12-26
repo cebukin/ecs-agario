@@ -10,7 +10,7 @@ using Unity.Transforms;
 using Unity.Collections;
 using Unity.Jobs;
 
-[UpdateAfter(typeof(CandidatesSystem))]
+[UpdateAfter(typeof(GridSystem))]
 public class CollisionSystem : JobComponentSystem
 {
     public struct Data
@@ -21,35 +21,68 @@ public class CollisionSystem : JobComponentSystem
     }
 
     [Inject] Data m_Data;
+    [Inject] GridSystem _gridSystem;
+    NativeArray<Size> _sizeCopy;
+    NativeArray<Position> _positionsCopy;
 
-    [Inject] CandidatesSystem _candidatesSystem;
+    protected override void OnDestroyManager()
+    {
+        CleanUp();
+    }
+
+    void CleanUp()
+    {
+        if (_sizeCopy.IsCreated)
+        {
+            _sizeCopy.Dispose();
+        }
+
+        if (_positionsCopy.IsCreated)
+        {
+            _positionsCopy.Dispose();
+        }
+    }
 
     [BurstCompile]
     struct CollisionJob : IJobParallelFor
     {
-        [ReadOnly] public ComponentDataArray<Position> Positions;
-        [DeallocateOnJobCompletion][ReadOnly] public NativeArray<int> CandidatesA;
-        [DeallocateOnJobCompletion][ReadOnly] public NativeArray<int> CandidatesB;
-
-        [NativeDisableParallelForRestriction]
-        public ComponentDataArray<Size> Sizes;
+        [ReadOnly] public NativeArray<Position> Positions;
+        [ReadOnly] public NativeMultiHashMap<int, int> Grid;
+        [NativeDisableParallelForRestriction] public NativeArray<Size> Sizes;
 
         public float MaxPlayerSize;
+        public float CellSize;
 
         public void Execute(int index)
         {
-            int indexA = CandidatesA[index];
-            int indexB = CandidatesB[index];
+            float3 position = Positions[index].Value;
+            int cellGridHash = Util.Hash(position, CellSize);
+
+            int otherItem;
+            var iterator = new NativeMultiHashMapIterator<int>();
+
+            if (Grid.TryGetFirstValue(cellGridHash, out otherItem, out iterator))
+            {
+                do
+                {
+                    CheckCollision(index, otherItem);
+                } while (Grid.TryGetNextValue(out otherItem, ref iterator));
+            }
+        }
+
+        void CheckCollision(int indexA, int indexB)
+        {
+            // we skip if indexA < indexB to avoid checking the same collision twice
+            if (indexA <= indexB || !IsColliding(indexA, indexB))
+            {
+                return;
+            }
+
             Size sizeA = Sizes[indexA];
             Size sizeB = Sizes[indexB];
 
             float sizeAValue = sizeA.Value;
             float sizeBValue = sizeB.Value;
-
-            if (!IsColliding(indexA, indexB))
-            {
-                return;
-            }
 
             if (sizeAValue > sizeBValue)
             {
@@ -68,39 +101,65 @@ public class CollisionSystem : JobComponentSystem
 
         bool IsColliding(int indexA, int indexB)
         {
-            float distance = Distance(indexA, indexB);
+            float distance = math.distance(Positions[indexA].Value, Positions[indexB].Value);
             float maxRadius = math.max(Sizes[indexA].Value / 2.0f, Sizes[indexB].Value / 2.0f);
             return distance < maxRadius;
         }
+    }
 
-        float Distance(int indexA, int indexB)
+    [BurstCompile]
+    struct CopyArrayToComponentData<T> : IJobParallelFor
+        where T : struct, IComponentData
+    {
+        [ReadOnly] public NativeArray<T> Source;
+        public ComponentDataArray<T> Results;
+
+        public void Execute(int index)
         {
-            return math.distance(Positions[indexA].Value, Positions[indexB].Value);
+            Results[index] = Source[index];
         }
     }
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        var candidatePairs = _candidatesSystem.CandidatePairs;
-        int nPairs = candidatePairs.Length;
-        NativeArray<int> candidatesA = new NativeArray<int>(nPairs, Allocator.TempJob);
-        NativeArray<int> candidatesB = new NativeArray<int>(nPairs, Allocator.TempJob);
+        CleanUp();
+        _sizeCopy = new NativeArray<Size>(m_Data.Length, Allocator.TempJob);
+        _positionsCopy = new NativeArray<Position>(m_Data.Length, Allocator.TempJob);
 
-        for (int i = 0; i < nPairs; i++)
+        var copySizesJob = new CopyComponentData<Size>
         {
-            candidatesA[i] = candidatePairs[i].x;
-            candidatesB[i] = candidatePairs[i].y;
-        }
+            Source = m_Data.Size,
+            Results = _sizeCopy
+        };
+
+        var copyPositionsJob = new CopyComponentData<Position>
+        {
+            Source = m_Data.Position,
+            Results = _positionsCopy
+        };
+
+        var copySizesJobHandle = copySizesJob.Schedule(m_Data.Length, 64, inputDeps);
+        var copyPositionsJobHandle = copyPositionsJob.Schedule(m_Data.Length, 64, inputDeps);
+
+        var copyBarrier = JobHandle.CombineDependencies(copyPositionsJobHandle, copySizesJobHandle);
 
         var collisionJob = new CollisionJob
         {
-            Positions = m_Data.Position,
-            Sizes = m_Data.Size,
+            Positions = _positionsCopy,
+            Sizes = _sizeCopy,
             MaxPlayerSize = Bootstrap.Settings.PlayerMaxSize,
-            CandidatesA = candidatesA,
-            CandidatesB = candidatesB
+            Grid = _gridSystem.Grid,
+            CellSize = Bootstrap.Settings.CellSize
         };
 
-        return collisionJob.Schedule(nPairs, 64, inputDeps);
+        var collisionJobHandle = collisionJob.Schedule(m_Data.Length, 64, copyBarrier);
+
+        var copySizesBackJob = new CopyArrayToComponentData<Size>
+        {
+            Source = _sizeCopy,
+            Results = m_Data.Size
+        };
+
+        return copySizesBackJob.Schedule(m_Data.Length, 64, collisionJobHandle);
     }
 }
