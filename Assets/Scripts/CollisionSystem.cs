@@ -73,24 +73,7 @@ public class CollisionSystem : PostGridSystem
 
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        Setup();
-
-        var copySizesJob = new CopyComponentData<Size>
-        {
-            Source = _mSpatialData.Size,
-            Results = _sizeCopy
-        };
-
-        var copyPositionsJob = new CopyComponentData<Position>
-        {
-            Source = _mSpatialData.Position,
-            Results = _positionsCopy
-        };
-
-        var copySizesJobHandle = copySizesJob.Schedule(_mSpatialData.Length, 64, inputDeps);
-        var copyPositionsJobHandle = copyPositionsJob.Schedule(_mSpatialData.Length, 64, inputDeps);
-
-        var copyBarrier = JobHandle.CombineDependencies(copyPositionsJobHandle, copySizesJobHandle);
+        var copyBarrier = Setup(inputDeps);
 
         var collisionJob = new CollisionJob
         {

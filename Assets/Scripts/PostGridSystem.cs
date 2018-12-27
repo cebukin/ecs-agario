@@ -1,6 +1,7 @@
 ﻿using Unity.Entities;
 using Unity.Transforms;
 using Unity.Collections;
+using Unity.Jobs;
 
 [UpdateAfter(typeof(GridSystem))]
 public class PostGridSystem : JobComponentSystem
@@ -35,10 +36,27 @@ public class PostGridSystem : JobComponentSystem
         }
     }
 
-    protected void Setup()
+    protected JobHandle Setup(JobHandle inputDeps)
     {
         CleanUp();
         _sizeCopy = new NativeArray<Size>(_mSpatialData.Length, Allocator.TempJob);
         _positionsCopy = new NativeArray<Position>(_mSpatialData.Length, Allocator.TempJob);
+
+        var copySizesJob = new CopyComponentData<Size>
+        {
+            Source = _mSpatialData.Size,
+            Results = _sizeCopy
+        };
+
+        var copyPositionsJob = new CopyComponentData<Position>
+        {
+            Source = _mSpatialData.Position,
+            Results = _positionsCopy
+        };
+
+        var copySizesJobHandle = copySizesJob.Schedule(_mSpatialData.Length, 64, inputDeps);
+        var copyPositionsJobHandle = copyPositionsJob.Schedule(_mSpatialData.Length, 64, inputDeps);
+
+        return JobHandle.CombineDependencies(copyPositionsJobHandle, copySizesJobHandle);
     }
 }
