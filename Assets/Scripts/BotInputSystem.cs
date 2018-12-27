@@ -48,6 +48,7 @@ public class BotInputSystem : PostGridSystem
 
             float3 heading = BotHeadings[index].Value;
             int targetSize = int.MinValue;
+            float targetDistance = float.MaxValue;
 
             if (Grid.TryGetFirstValue(cellGridHash, out otherItem, out iterator))
             {
@@ -57,23 +58,24 @@ public class BotInputSystem : PostGridSystem
                     {
                         continue;
                     }
-                    
+
                     float3 bodyPosition = Positions[otherItem].Value;
                     int bodySize = Sizes[otherItem].Value;
-
-                    if (bodySize <= targetSize)
-                    {
-                        continue;
-                    }
 
                     float3 targetVector = bodyPosition - botPosition;
                     float distToTarget = math.length(targetVector);
 
-                    if (distToTarget <= float.Epsilon)
+                    if (bodySize < targetSize)
                     {
                         continue;
                     }
 
+                    if (bodySize == targetSize && distToTarget >= targetDistance)
+                    {
+                        continue;
+                    }
+
+                    targetDistance = distToTarget;
                     targetSize = bodySize;
                     bool isThreat = bodySize > botSize;
                     heading = (isThreat ? -1 : 1) * math.normalize(targetVector);
