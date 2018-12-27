@@ -15,6 +15,7 @@ public class BotInputSystem : PostGridSystem
         public ComponentDataArray<Heading> Heading;
         public ComponentDataArray<Position> Position;
         public ComponentDataArray<Size> Size;
+        public EntityArray Entities;
     }
 
     [Inject] BotData m_BotData;
@@ -23,11 +24,13 @@ public class BotInputSystem : PostGridSystem
     struct CalculateBotHeadingsJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<Position> Positions;
-        [ReadOnly] public NativeMultiHashMap<int, int> Grid;
         [ReadOnly] public NativeArray<Size> Sizes;
+        [ReadOnly] public NativeArray<Entity> Entities;
+        [ReadOnly] public NativeMultiHashMap<int, int> Grid;
 
         [ReadOnly] public ComponentDataArray<Position> BotPositions;
         [ReadOnly] public ComponentDataArray<Size> BotSizes;
+        [ReadOnly] public EntityArray BotEntities;
         public ComponentDataArray<Heading> BotHeadings;
 
         public float CellSize;
@@ -36,6 +39,7 @@ public class BotInputSystem : PostGridSystem
         {
             float3 botPosition = BotPositions[index].Value;
             int botSize = BotSizes[index].Value;
+            Entity botEntity = BotEntities[index];
 
             int cellGridHash = Util.Hash(botPosition, CellSize);
 
@@ -49,6 +53,11 @@ public class BotInputSystem : PostGridSystem
             {
                 do
                 {
+                    if (Entities[otherItem] == botEntity)
+                    {
+                        continue;
+                    }
+                    
                     float3 bodyPosition = Positions[otherItem].Value;
                     int bodySize = Sizes[otherItem].Value;
 
@@ -88,10 +97,12 @@ public class BotInputSystem : PostGridSystem
         {
             Positions = _positionsCopy,
             Sizes = _sizeCopy,
+            Entities = _entitiesCopy,
             Grid = _gridSystem.Grid,
             BotPositions = m_BotData.Position,
             BotSizes = m_BotData.Size,
             BotHeadings = m_BotData.Heading,
+            BotEntities = m_BotData.Entities,
             CellSize = Bootstrap.Settings.CellSize
         };
 

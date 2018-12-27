@@ -9,14 +9,17 @@ public class PostGridSystem : JobComponentSystem
     public struct SpatialData
     {
         public readonly int Length;
+        public EntityArray Entities;
         public ComponentDataArray<Position> Position;
         public ComponentDataArray<Size> Size;
     }
 
     [Inject] protected SpatialData _mSpatialData;
     [Inject] protected GridSystem _gridSystem;
+
     protected NativeArray<Size> _sizeCopy;
     protected NativeArray<Position> _positionsCopy;
+    protected NativeArray<Entity> _entitiesCopy;
 
     protected override void OnDestroyManager()
     {
@@ -34,6 +37,11 @@ public class PostGridSystem : JobComponentSystem
         {
             _positionsCopy.Dispose();
         }
+
+        if (_entitiesCopy.IsCreated)
+        {
+            _entitiesCopy.Dispose();
+        }
     }
 
     protected JobHandle Setup(JobHandle inputDeps)
@@ -41,6 +49,7 @@ public class PostGridSystem : JobComponentSystem
         CleanUp();
         _sizeCopy = new NativeArray<Size>(_mSpatialData.Length, Allocator.TempJob);
         _positionsCopy = new NativeArray<Position>(_mSpatialData.Length, Allocator.TempJob);
+        _entitiesCopy = new NativeArray<Entity>(_mSpatialData.Length, Allocator.TempJob);
 
         var copySizesJob = new CopyComponentData<Size>
         {
@@ -54,9 +63,16 @@ public class PostGridSystem : JobComponentSystem
             Results = _positionsCopy
         };
 
+        var copyEntitiesJob = new CopyEntities
+        {
+            Source = _mSpatialData.Entities,
+            Results = _entitiesCopy
+        };
+
         var copySizesJobHandle = copySizesJob.Schedule(_mSpatialData.Length, 64, inputDeps);
         var copyPositionsJobHandle = copyPositionsJob.Schedule(_mSpatialData.Length, 64, inputDeps);
+        var copyEntitiesJobHandle = copyEntitiesJob.Schedule(_mSpatialData.Length, 64, inputDeps);
 
-        return JobHandle.CombineDependencies(copyPositionsJobHandle, copySizesJobHandle);
+        return JobHandle.CombineDependencies(copyPositionsJobHandle, copySizesJobHandle, copyEntitiesJobHandle);
     }
 }
