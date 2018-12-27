@@ -22,7 +22,7 @@ public class DestructionSystem : ComponentSystem
     {
         for (int i = 0; i < m_Data.Length; i++)
         {
-            if (m_Data.Size[i].Value < float.Epsilon)
+            if (m_Data.Size[i].Value <= 0)
             {
                 PostUpdateCommands.DestroyEntity(m_Data.Entities[i]);
             }

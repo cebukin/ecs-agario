@@ -4,15 +4,15 @@ using Unity.Mathematics;
 
 public class Settings : MonoBehaviour
 {
-    public float PlayerInitialSize;
-    public float PlayerMaxSize;
-    public float FoodSize;
+    public int PlayerInitialSize;
+    public int PlayerMaxSize;
+    public int FoodSize;
     public float PlayerMaxSpeed;
     public int ArenaSize;
     public int FoodCount;
     public int BotCount;
     public int InitialCameraSize;
 
-    public float CellSize => PlayerMaxSize * 4;
+    public int CellSize => PlayerMaxSize * 4;
 
 }

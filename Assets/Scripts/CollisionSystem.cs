@@ -14,7 +14,7 @@ public class CollisionSystem : PostGridSystem
         [ReadOnly] public NativeMultiHashMap<int, int> Grid;
         [NativeDisableParallelForRestriction] public NativeArray<Size> Sizes;
 
-        public float MaxPlayerSize;
+        public int MaxPlayerSize;
         public float CellSize;
 
         public void Execute(int index)
@@ -50,13 +50,13 @@ public class CollisionSystem : PostGridSystem
 
             if (sizeAValue > sizeBValue)
             {
-                sizeA.Value = math.min(sizeAValue + sizeBValue, MaxPlayerSize);
-                sizeB.Value = 0.0f; // will be destroyed later by another system
+                sizeA.Value = (int) math.min(sizeAValue + sizeBValue, MaxPlayerSize);
+                sizeB.Value = 0; // will be destroyed later by another system
             }
             else
             {
-                sizeA.Value = 0.0f; // will be destroyed later by another system
-                sizeB.Value = math.min(sizeAValue + sizeBValue, MaxPlayerSize);
+                sizeA.Value = 0; // will be destroyed later by another system
+                sizeB.Value = (int) math.min(sizeAValue + sizeBValue, MaxPlayerSize);
             }
 
             Sizes[indexA] = sizeA;

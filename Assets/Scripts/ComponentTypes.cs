@@ -12,7 +12,7 @@ public struct Heading : IComponentData
 
 public struct Size : IComponentData
 {
-    public float Value;
+    public int Value;
 }
 
 public struct Food : IComponentData {}

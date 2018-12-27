@@ -11,14 +11,14 @@ public class MoveSystem : JobComponentSystem
     [BurstCompile]
     struct CalculatePosition : IJobProcessComponentData<Position, Heading, Size>
     {
-        public float InitialPlayerSize;
+        public int InitialPlayerSize;
         public float PlayerMaxSpeed;
         public float dt;
-        public float ArenaSize;
+        public int ArenaSize;
 
         public void Execute(ref Position position, [ReadOnly] ref Heading heading, [ReadOnly] ref Size size)
         {
-            float sizeRatio = InitialPlayerSize / size.Value;
+            float sizeRatio = (float) InitialPlayerSize / size.Value;
             float speed = math.sqrt(sizeRatio) * PlayerMaxSpeed;
 
             float3 positionValue = position.Value;

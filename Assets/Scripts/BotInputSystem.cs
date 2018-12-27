@@ -19,7 +19,7 @@ public class BotInputSystem : PostGridSystem
 
     [Inject] BotData m_BotData;
 
-    //[BurstCompile]
+    [BurstCompile]
     struct CalculateBotHeadingsJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<Position> Positions;
@@ -35,7 +35,7 @@ public class BotInputSystem : PostGridSystem
         public void Execute(int index)
         {
             float3 botPosition = BotPositions[index].Value;
-            float botSize = BotSizes[index].Value;
+            int botSize = BotSizes[index].Value;
 
             int cellGridHash = Util.Hash(botPosition, CellSize);
 
@@ -43,14 +43,14 @@ public class BotInputSystem : PostGridSystem
             NativeMultiHashMapIterator<int> iterator;
 
             float3 heading = BotHeadings[index].Value;
-            float targetSize = 0;
+            int targetSize = int.MinValue;
 
             if (Grid.TryGetFirstValue(cellGridHash, out otherItem, out iterator))
             {
                 do
                 {
                     float3 bodyPosition = Positions[otherItem].Value;
-                    float bodySize = Sizes[otherItem].Value;
+                    int bodySize = Sizes[otherItem].Value;
 
                     if (bodySize <= targetSize)
                     {

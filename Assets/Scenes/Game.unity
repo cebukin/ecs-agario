@@ -159,9 +159,9 @@ MonoBehaviour:
   PlayerMaxSize: 20
   FoodSize: 1
   PlayerMaxSpeed: 10
-  ArenaSize: 10
-  FoodCount: 20
-  BotCount: 10
+  ArenaSize: 40
+  FoodCount: 1000
+  BotCount: 1
   InitialCameraSize: 20
 --- !u!1 &519420028
 GameObject:
