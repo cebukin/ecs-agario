@@ -1,4 +1,22 @@
-﻿using Unity.Mathematics;
+﻿using Unity.Burst;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+using Unity.Collections;
+using Unity.Jobs;
+
+[BurstCompile]
+struct CopyArrayToComponentData<T> : IJobParallelFor
+    where T : struct, IComponentData
+{
+    [ReadOnly] public NativeArray<T> Source;
+    public ComponentDataArray<T> Results;
+
+    public void Execute(int index)
+    {
+        Results[index] = Source[index];
+    }
+}
 
 public static class Util
 {

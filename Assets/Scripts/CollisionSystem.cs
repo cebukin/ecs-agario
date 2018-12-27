@@ -1,48 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Tracing;
-using System.Linq;
-using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
-using UnityEngine;
 using Unity.Transforms;
 using Unity.Collections;
 using Unity.Jobs;
 
-[UpdateAfter(typeof(GridSystem))]
-public class CollisionSystem : JobComponentSystem
+public class CollisionSystem : PostGridSystem
 {
-    public struct Data
-    {
-        public readonly int Length;
-        public ComponentDataArray<Position> Position;
-        public ComponentDataArray<Size> Size;
-    }
-
-    [Inject] Data m_Data;
-    [Inject] GridSystem _gridSystem;
-    NativeArray<Size> _sizeCopy;
-    NativeArray<Position> _positionsCopy;
-
-    protected override void OnDestroyManager()
-    {
-        CleanUp();
-    }
-
-    void CleanUp()
-    {
-        if (_sizeCopy.IsCreated)
-        {
-            _sizeCopy.Dispose();
-        }
-
-        if (_positionsCopy.IsCreated)
-        {
-            _positionsCopy.Dispose();
-        }
-    }
-
     [BurstCompile]
     struct CollisionJob : IJobParallelFor
     {
@@ -59,7 +23,7 @@ public class CollisionSystem : JobComponentSystem
             int cellGridHash = Util.Hash(position, CellSize);
 
             int otherItem;
-            var iterator = new NativeMultiHashMapIterator<int>();
+            NativeMultiHashMapIterator<int> iterator;
 
             if (Grid.TryGetFirstValue(cellGridHash, out otherItem, out iterator))
             {
@@ -107,39 +71,24 @@ public class CollisionSystem : JobComponentSystem
         }
     }
 
-    [BurstCompile]
-    struct CopyArrayToComponentData<T> : IJobParallelFor
-        where T : struct, IComponentData
-    {
-        [ReadOnly] public NativeArray<T> Source;
-        public ComponentDataArray<T> Results;
-
-        public void Execute(int index)
-        {
-            Results[index] = Source[index];
-        }
-    }
-
     protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        CleanUp();
-        _sizeCopy = new NativeArray<Size>(m_Data.Length, Allocator.TempJob);
-        _positionsCopy = new NativeArray<Position>(m_Data.Length, Allocator.TempJob);
+        Setup();
 
         var copySizesJob = new CopyComponentData<Size>
         {
-            Source = m_Data.Size,
+            Source = _mSpatialData.Size,
             Results = _sizeCopy
         };
 
         var copyPositionsJob = new CopyComponentData<Position>
         {
-            Source = m_Data.Position,
+            Source = _mSpatialData.Position,
             Results = _positionsCopy
         };
 
-        var copySizesJobHandle = copySizesJob.Schedule(m_Data.Length, 64, inputDeps);
-        var copyPositionsJobHandle = copyPositionsJob.Schedule(m_Data.Length, 64, inputDeps);
+        var copySizesJobHandle = copySizesJob.Schedule(_mSpatialData.Length, 64, inputDeps);
+        var copyPositionsJobHandle = copyPositionsJob.Schedule(_mSpatialData.Length, 64, inputDeps);
 
         var copyBarrier = JobHandle.CombineDependencies(copyPositionsJobHandle, copySizesJobHandle);
 
@@ -152,14 +101,14 @@ public class CollisionSystem : JobComponentSystem
             CellSize = Bootstrap.Settings.CellSize
         };
 
-        var collisionJobHandle = collisionJob.Schedule(m_Data.Length, 64, copyBarrier);
+        var collisionJobHandle = collisionJob.Schedule(_mSpatialData.Length, 64, copyBarrier);
 
         var copySizesBackJob = new CopyArrayToComponentData<Size>
         {
             Source = _sizeCopy,
-            Results = m_Data.Size
+            Results = _mSpatialData.Size
         };
 
-        return copySizesBackJob.Schedule(m_Data.Length, 64, collisionJobHandle);
+        return copySizesBackJob.Schedule(_mSpatialData.Length, 64, collisionJobHandle);
     }
 }
