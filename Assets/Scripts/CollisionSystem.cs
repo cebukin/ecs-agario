@@ -9,7 +9,7 @@ public class CollisionSystem : PostGridSystem
 {
     [Inject] CollisionBarrierSystem _barrierSystem;
 
-    [BurstCompile]
+    //[BurstCompile]
     struct CollisionJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<Position> Positions;
