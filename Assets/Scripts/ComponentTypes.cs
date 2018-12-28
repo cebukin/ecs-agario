@@ -5,6 +5,11 @@ using Unity.Transforms;
 public struct PlayerInput : IComponentData {}
 public struct BotInput : IComponentData {}
 
+public struct Destroy : IComponentData
+{
+    public Entity Entity;
+}
+
 public struct Heading : IComponentData
 {
     public float3 Value;

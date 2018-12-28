@@ -7,12 +7,16 @@ using Unity.Jobs;
 
 public class CollisionSystem : PostGridSystem
 {
+    [Inject] CollisionBarrierSystem _barrierSystem;
+
     [BurstCompile]
     struct CollisionJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<Position> Positions;
         [ReadOnly] public NativeMultiHashMap<int, int> Grid;
         [NativeDisableParallelForRestriction] public NativeArray<Size> Sizes;
+        [ReadOnly] public NativeArray<Entity> Entities;
+        public EntityCommandBuffer.Concurrent CommandBuffer;
 
         public int MaxPlayerSize;
         public float CellSize;
@@ -51,12 +55,14 @@ public class CollisionSystem : PostGridSystem
             if (sizeAValue > sizeBValue)
             {
                 sizeA.Value = (int) math.min(sizeAValue + sizeBValue, MaxPlayerSize);
-                sizeB.Value = 0; // will be destroyed later by another system
+                CommandBuffer.CreateEntity(indexA);
+                CommandBuffer.AddComponent(indexA, new Destroy { Entity = Entities[indexB]});
             }
             else
             {
-                sizeA.Value = 0; // will be destroyed later by another system
                 sizeB.Value = (int) math.min(sizeAValue + sizeBValue, MaxPlayerSize);
+                CommandBuffer.CreateEntity(indexA);
+                CommandBuffer.AddComponent(indexA, new Destroy { Entity = Entities[indexA]});
             }
 
             Sizes[indexA] = sizeA;
@@ -79,6 +85,8 @@ public class CollisionSystem : PostGridSystem
         {
             Positions = _positionsCopy,
             Sizes = _sizeCopy,
+            Entities = _entitiesCopy,
+            CommandBuffer = _barrierSystem.CreateCommandBuffer().ToConcurrent(),
             MaxPlayerSize = Bootstrap.Settings.PlayerMaxSize,
             Grid = _gridSystem.Grid,
             CellSize = Bootstrap.Settings.CellSize

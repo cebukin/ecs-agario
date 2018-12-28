@@ -6,14 +6,14 @@ using Unity.Transforms;
 using Unity.Collections;
 using Unity.Jobs;
 
-[UpdateAfter(typeof(CollisionSystem))]
+[UpdateAfter(typeof(CollisionBarrierSystem))]
 public class DestructionSystem : ComponentSystem
 {
     public struct Data
     {
         public readonly int Length;
+        public ComponentDataArray<Destroy> Destroy;
         public EntityArray Entities;
-        public ComponentDataArray<Size> Size;
     }
 
     [Inject] Data m_Data;
@@ -22,10 +22,8 @@ public class DestructionSystem : ComponentSystem
     {
         for (int i = 0; i < m_Data.Length; i++)
         {
-            if (m_Data.Size[i].Value <= 0)
-            {
-                PostUpdateCommands.DestroyEntity(m_Data.Entities[i]);
-            }
+            PostUpdateCommands.DestroyEntity(m_Data.Entities[i]);
+            PostUpdateCommands.DestroyEntity(m_Data.Destroy[i].Entity);
         }
     }
 }
