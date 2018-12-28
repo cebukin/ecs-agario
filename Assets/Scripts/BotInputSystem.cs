@@ -63,7 +63,7 @@ public class BotInputSystem : PostGridSystem
                     int bodySize = Sizes[otherItem].Value;
 
                     float3 targetVector = bodyPosition - botPosition;
-                    float distToTarget = math.lengthsq(targetVector);
+                    float distToTarget = math.length(targetVector);
 
                     if (bodySize < targetSize)
                     {

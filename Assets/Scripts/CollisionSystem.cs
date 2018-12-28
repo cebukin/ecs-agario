@@ -65,9 +65,9 @@ public class CollisionSystem : PostGridSystem
 
         bool IsColliding(int indexA, int indexB)
         {
-            float distanceSq = math.distance(Positions[indexA].Value, Positions[indexB].Value);
+            float distance = math.distance(Positions[indexA].Value, Positions[indexB].Value);
             float maxRadius = math.max(Sizes[indexA].Value / 2.0f, Sizes[indexB].Value / 2.0f);
-            return distanceSq < maxRadius*maxRadius;
+            return distance < maxRadius;
         }
     }
 
